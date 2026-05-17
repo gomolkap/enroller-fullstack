@@ -1,3 +1,5 @@
+import './MeetingsList.css';
+
 export default function MeetingsList({meetings, onDelete}) {
     return (
         <table>
@@ -13,7 +15,7 @@ export default function MeetingsList({meetings, onDelete}) {
                 meetings.map((meeting, index) => <tr key={index}>
                     <td>{meeting.title}</td>
                     <td>{meeting.description}</td>
-                    <td><button className={"button button-outline"}
+                    <td><button className="button button-outline button-red"
                             onClick={()=>{onDelete(meeting)}}>Usuń</button></td>
                 </tr>)
             }
