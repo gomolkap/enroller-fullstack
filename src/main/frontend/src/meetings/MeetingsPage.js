@@ -6,14 +6,15 @@ export default function MeetingsPage({username}) {
     const [meetings, setMeetings] = useState([]);
     const [addingNewMeeting, setAddingNewMeeting] = useState(false);
 
+    const fetchMeetings = async () => {
+        const response = await fetch(`/api/meetings`);
+        if (response.ok) {
+            const data = await response.json();
+            setMeetings(data);
+        }
+    };
+
     useEffect(() => {
-        const fetchMeetings = async () => {
-            const response = await fetch(`/api/meetings`);
-            if (response.ok) {
-                const meetings = await response.json();
-                setMeetings(meetings);
-            }
-        };
         fetchMeetings();
     }, []);
 
@@ -24,8 +25,7 @@ export default function MeetingsPage({username}) {
             headers: { 'Content-Type': 'application/json' }
         });
         if (response.ok) {
-            const nextMeetings = [...meetings, await response.json()];
-            setMeetings(nextMeetings);
+            await fetchMeetings();
             setAddingNewMeeting(false);
         }
     }
@@ -35,8 +35,40 @@ export default function MeetingsPage({username}) {
             method: 'DELETE',
         });
         if (response.ok) {
-            const nextMeetings = meetings.filter(m => m !== meeting);
-            setMeetings(nextMeetings);
+            await fetchMeetings();
+        } else {
+            alert("Nie można usunąć spotkania z zapisanymi uczestnikami.");
+        }
+    }
+
+    async function handleSignUp(meeting) {
+        const response = await fetch(`/api/meetings/${meeting.id}/participants`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: username })
+        });
+        if (response.ok) {
+            await fetchMeetings();
+        }
+    }
+
+    async function handleSignOut(meeting) {
+        const response = await fetch(`/api/meetings/${meeting.id}/participants/${username}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            await fetchMeetings();
+        }
+    }
+
+    async function handleUpdateMeeting(meeting, newTitle, newDescription) {
+        const response = await fetch(`/api/meetings/${meeting.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: newTitle, description: newDescription })
+        });
+        if (response.ok) {
+            await fetchMeetings();
         }
     }
 
@@ -50,7 +82,10 @@ export default function MeetingsPage({username}) {
             }
             {meetings.length > 0 &&
                 <MeetingsList meetings={meetings} username={username}
-                              onDelete={handleDeleteMeeting}/>}
+                              onDelete={handleDeleteMeeting}
+                              onSignUp={handleSignUp}
+                              onSignOut={handleSignOut}
+                              onUpdate={handleUpdateMeeting} />}
         </div>
     )
 }
